@@ -3,8 +3,6 @@ import json
 import pandas as pd
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
-from tensorflow.keras import layers, models
-from tensorflow.keras.applications import EfficientNetB0
 
 
 def prepare(test_size=0.2, random_state=42):
@@ -47,8 +45,6 @@ def prepare(test_size=0.2, random_state=42):
 
 
 def augment_image(image):
-    image = tf.image.random_flip_left_right(image)
-    image = tf.image.random_flip_up_down(image)
     image = tf.image.random_brightness(image, max_delta=0.2)
     image = tf.image.random_contrast(image, 0.8, 1.2)
     image = tf.image.random_crop(
@@ -129,7 +125,7 @@ def build_model(img_size=(224, 224), num_labels=8):
         weights="imagenet",
         input_shape=(*img_size, 3)
     )
-    base_model.trainable = False
+    base_model.trainable = True
 
     left_features = base_model(left_input)
     right_features = base_model(right_input)
