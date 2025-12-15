@@ -5,15 +5,14 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras import layers, models
 
 BATCH_SIZE = 32
-IMG_SIZE = (512, 512)
-
+IMG_SIZE=(400, 400)
 
 def prepare(test_size=0.2, random_state=42):
     df = pd.read_csv("/kaggle/input/ocular-disease-recognition-odir5k/full_df.csv", sep=',')
 
     samples = []
     for _, row in df.iterrows():
-        diagnosis_vector = [int(row[c]) for c in ["N", "D", "G", "C", "A", "H", "M", "O"]]
+        diagnosis_vector = [int(row[c]) for c in ["N","D","G","C","A","H","M","O"]]
         samples.append({
             "id": int(row["ID"]),
             "leftImage": f"/home/processed/{row['ID']}_left.jpg",
@@ -87,7 +86,7 @@ def create_tf_dataset(json_path, shuffle, augment, repeat):
     dataset = dataset.map(lambda x: parse_sample(x, augment), num_parallel_calls=tf.data.AUTOTUNE)
 
     if shuffle:
-        dataset = dataset.shuffle(buffer_size=500)
+        dataset = dataset.shuffle(buffer_size=600)
 
     if repeat:
         dataset = dataset.repeat()
@@ -168,8 +167,7 @@ if __name__ == "__main__":
     )
 
     callbacks = [
-        tf.keras.callbacks.ModelCheckpoint("/home/best_model.keras", monitor="val_auc", mode="max",
-                                           save_best_only=True),
+        tf.keras.callbacks.ModelCheckpoint("/home/best_model.keras", monitor="val_auc", mode="max", save_best_only=True),
         tf.keras.callbacks.EarlyStopping(monitor="val_auc", patience=5, restore_best_weights=True),
         tf.keras.callbacks.ReduceLROnPlateau(monitor='val_auc', factor=0.5, patience=3, min_lr=1e-6)
     ]
