@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from tensorflow.keras import layers, models
 
 BATCH_SIZE = 32
-IMG_SIZE = (224, 224)
+IMG_SIZE = (512, 512)
 
 
 def prepare(test_size=0.2, random_state=42):
@@ -39,7 +39,7 @@ def prepare(test_size=0.2, random_state=42):
 def augment_image(image):
     image = tf.image.random_brightness(image, max_delta=0.1)
     image = tf.image.random_contrast(image, 0.9, 1.1)
-    image = tf.image.resize_with_crop_or_pad(image, 240, 240)
+    image = tf.image.resize_with_crop_or_pad(image, IMG_SIZE[0], IMG_SIZE[1])
     image = tf.image.random_crop(image, size=[IMG_SIZE[0], IMG_SIZE[1], 3])
     return image
 
@@ -87,7 +87,7 @@ def create_tf_dataset(json_path, shuffle, augment, repeat):
     dataset = dataset.map(lambda x: parse_sample(x, augment), num_parallel_calls=tf.data.AUTOTUNE)
 
     if shuffle:
-        dataset = dataset.shuffle(buffer_size=1200)
+        dataset = dataset.shuffle(buffer_size=500)
 
     if repeat:
         dataset = dataset.repeat()
@@ -112,6 +112,14 @@ def create_custom_cnn(input_shape):
     x = layers.MaxPooling2D((2, 2))(x)
 
     x = layers.Conv2D(256, (3, 3), padding='same', activation='relu')(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.MaxPooling2D((2, 2))(x)
+
+    x = layers.Conv2D(512, (3, 3), padding='same', activation='relu')(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.MaxPooling2D((2, 2))(x)
+
+    x = layers.Conv2D(1024, (3, 3), padding='same', activation='relu')(x)
     x = layers.BatchNormalization()(x)
     x = layers.MaxPooling2D((2, 2))(x)
 
@@ -162,7 +170,7 @@ if __name__ == "__main__":
     callbacks = [
         tf.keras.callbacks.ModelCheckpoint("/home/best_model.keras", monitor="val_auc", mode="max",
                                            save_best_only=True),
-        tf.keras.callbacks.EarlyStopping(monitor="val_auc", patience=6, restore_best_weights=True),
+        tf.keras.callbacks.EarlyStopping(monitor="val_auc", patience=5, restore_best_weights=True),
         tf.keras.callbacks.ReduceLROnPlateau(monitor='val_auc', factor=0.5, patience=3, min_lr=1e-6)
     ]
 
